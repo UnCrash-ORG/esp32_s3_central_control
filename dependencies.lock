@@ -1,0 +1,100 @@
+dependencies:
+  espp/base_component:
+    component_hash: 901fc94e5e95c8d3a4dc2f8011bfdafe73142d7c90c8c4f5dddbe4d27742c21c
+    dependencies:
+    - name: espp/logger
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=1.0'
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.4.1
+  espp/format:
+    component_hash: 3fcd42d899bfc86789775119810bcb3e752836762620fe28c5a81f354fcdaae4
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.4.1
+  espp/logger:
+    component_hash: fdefb50440e2e7c0a069727f0863db3a87af4ce547320d9421007b9451c5955d
+    dependencies:
+    - name: espp/format
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=1.0'
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.4.1
+  espp/pid:
+    component_hash: 1bb98254ecb68600124d0cdcec4b4c912c10f822c37dc2ce40dfafc2b4c75731
+    dependencies:
+    - name: espp/base_component
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=1.0'
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.4.0
+  espressif/bdc_motor:
+    component_hash: 4165d3711efeab02dfe120716a0c10f9a838bd935e7230efa5f614976217b2eb
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.2.1
+  espressif/servo:
+    component_hash: 590e8811e0542d04cef3d355cced4bdbdf132bdd8a770e894201ba24743b2acf
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.4'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.0.0
+  gin66/fastaccelstepper:
+    component_hash: 95f8ccb33f0d2c03b68ab322f26fc2b39c6fbed5d9eff725c5a113922ba97686
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.0.1
+  idf:
+    source:
+      type: idf
+    version: 6.1.0
+  tny-robotics/mpu6050-esp-idf:
+    component_hash: 4b4236633c84283401ef809fab7d6375e6998aeb3744758bb2d93c3a490544c9
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.1.0
+direct_dependencies:
+- espp/pid
+- espressif/bdc_motor
+- espressif/servo
+- gin66/fastaccelstepper
+- tny-robotics/mpu6050-esp-idf
+manifest_hash: 0543a1b5d9d31fd31a12f19da6ded9740bc2f2f033086cd8252ced28ee7f05a8
+target: esp32s3
+version: 3.0.0

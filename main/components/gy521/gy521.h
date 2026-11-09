@@ -9,7 +9,7 @@
 
 #include "soc/gpio_num.h"
 #include "mpu6050.h"
-#include "libs/MahonyAHRS/MahonyAHRS.h"
+#include "components/MahonyAHRS/MahonyAHRS.h"
 #include "array"
 #include "mutex"
 

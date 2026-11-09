@@ -5,8 +5,8 @@
 #ifndef ROBOT_MY_TASKS_H
 #define ROBOT_MY_TASKS_H
 
-#include "libs/bdc_motor_pid/bdc_motor_pid.h"
-#include "libs/gy521/gy521.h"
+#include "components/bdc_motor_pid/bdc_motor_pid.h"
+#include "components/gy521/gy521.h"
 #include "FastAccelStepper.h"
 #include "freertos/task.h"
 #include "iot_servo.h"

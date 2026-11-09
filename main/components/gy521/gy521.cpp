@@ -79,9 +79,9 @@ namespace robot
                 .gx = gyro_value.gyro_x,
                 .gy = gyro_value.gyro_y,
                 .gz = gyro_value.gyro_z,
+                .yaw = getYaw(),
                 .pitch = getPitch(),
-                .roll = getRoll(),
-                .yaw = getYaw()
+                .roll = getRoll()
             };
             last_seen = esp_timer_get_time();
             buffer = data;

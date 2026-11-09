@@ -6,9 +6,9 @@
 #include <esp_err.h>
 #include "driver/uart.h"
 #include "freertos/queue.h"
-#include "include/my_tasks.h"
-#include "include/pin_config.h"
-#include "include/uart.h"
+#include "../include/my_tasks.h"
+#include "../include/pin_config.h"
+#include "../include/uart.h"
 #include "esp_crc.h"
 
 static constexpr int UART_BUFFER_SIZE = 1024;
@@ -143,14 +143,11 @@ using namespace robot;
                     sizeof(uart::frame_header) + sizeof(uart::payload_acquire_set_servo) - 4
                 );
                 if (true_crc32 != recv_msg->payload.set_servo.crc32) continue;
-                
+
 
                 break;
             }
-        default:
-
-
-
+        default: break;
         }
     }
 }

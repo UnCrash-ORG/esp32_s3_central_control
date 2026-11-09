@@ -1,0 +1,114 @@
+{
+  "name": "Robot",
+  "owner_uuid": "29961b591725477389856b6d2aeb2d2d",
+  "creator_uuid": "29961b591725477389856b6d2aeb2d2d",
+  "created_at": "2026-11-02 14:43:01",
+  "updated_at": "2026-11-02 14:43:01",
+  "modifier_uuid": "29961b591725477389856b6d2aeb2d2d",
+  "content": "",
+  "archive": false,
+  "cbb_project": 0,
+  "thumb": "",
+  "ticket": 1,
+  "g_ticket": 1,
+  "boards": [],
+  "block_symbol_attrs_groups": {},
+  "default_sheet": "6d7dd5bdc2e2397d",
+  "branch_uuid": "",
+  "pcb_count": 0,
+  "format": "folder",
+  "profile": {
+    "boards": {
+      "37b361c8f61e6086": {
+        "uuid": "37b361c8f61e6086",
+        "title": "Central_Controller",
+        "zIndex": 2
+      }
+    },
+    "schematics": {
+      "6bbd248e6500ce54": {
+        "uuid": "6bbd248e6500ce54",
+        "name": "Central_Controller",
+        "board": "37b361c8f61e6086",
+        "source": "",
+        "version": "1794219209472",
+        "updateTime": 1794219209472
+      }
+    },
+    "sheets": {
+      "30c4176f8a8c7c08": {
+        "uuid": "30c4176f8a8c7c08",
+        "title": "Main",
+        "schematic_uuid": "6bbd248e6500ce54",
+        "zIndex": 1,
+        "source": "",
+        "version": "1794219205535",
+        "updateTime": 1794219205535
+      },
+      "c1796d1fdea8da16": {
+        "uuid": "c1796d1fdea8da16",
+        "title": "Power",
+        "schematic_uuid": "6bbd248e6500ce54",
+        "zIndex": 2,
+        "source": "",
+        "version": "1794219209472",
+        "updateTime": 1794219209472
+      }
+    },
+    "pcbs": {
+      "44ce854356e4982a": {
+        "uuid": "44ce854356e4982a",
+        "title": "PCB1",
+        "board": "37b361c8f61e6086",
+        "parent_uuid": "",
+        "source": "",
+        "version": "1793875534239",
+        "updateTime": 1793875534239
+      }
+    },
+    "panels": {
+      "db57ac739ee2442b": {
+        "uuid": "db57ac739ee2442b",
+        "title": "Panel1",
+        "zIndex": null
+      }
+    },
+    "blockSymbols": {
+      "46430ae4aaa709d9": {
+        "uuid": "46430ae4aaa709d9",
+        "title": "Central_Controller",
+        "docType": 17,
+        "source": "",
+        "version": "1794219121622",
+        "updateTime": 1794219121622
+      }
+    },
+    "owner": {
+      "uuid": "29961b591725477389856b6d2aeb2d2d"
+    },
+    "simSchematics": {},
+    "simulations": {}
+  },
+  "config": {
+    "defaultSheet": "6d7dd5bdc2e2397d",
+    "settings": {
+      "UNIVERSAL": {
+        "dataType": "UNIVERSAL",
+        "data": {
+          "allowLibRename": true,
+          "defaultNetName": true,
+          "wireMultipleNet": true,
+          "netFlagCrossLayerConnection": true,
+          "netLabelCrossPageConnection": true,
+          "busGenerateNetClass": true,
+          "relevanceDisplayRow": "SINGLE",
+          "relevanceBelongSchPage": "NAME",
+          "relevanceLocation": "ZONE",
+          "multipartCrossLayer": true,
+          "nonElectronicAddIntoBom": false,
+          "nonElectronicUpdatePcb": false
+        }
+      }
+    }
+  }
+}

@@ -6,7 +6,6 @@
 #include "mutex"
 #include "numbers"
 
-constexpr float RAD_TO_DEG = 180.0f / std::numbers::pi_v<float>;
 constexpr float DIAMETER_WHEEL_M = 0.8;
 constexpr float PERIMETER_WHEEL_M = DIAMETER_WHEEL_M * std::numbers::pi_v<float>;
 constexpr float K = 1; //TODO: To be measured
@@ -23,13 +22,11 @@ constexpr TickType_t FREQ_MS = pdMS_TO_TICKS(10);
 
         //Entering CRITICAL
         sharing_contents->sharing_variables.target_speed_mutex.lock();
-        float target_vx = sharing_contents->sharing_variables.target_vx_m;
-        float target_vy = sharing_contents->sharing_variables.target_vy_m;
-        float target_omega_deg = sharing_contents->sharing_variables.target_omega_degrees;
+        const float target_vx = sharing_contents->sharing_variables.target_vx_m;
+        const float target_vy = sharing_contents->sharing_variables.target_vy_m;
+        const float target_omega_rad = sharing_contents->sharing_variables.target_omega_rad;
         sharing_contents->sharing_variables.target_speed_mutex.unlock();
         //Leaving CRITICAL
-
-        const auto target_omega_rad = target_omega_deg * RAD_TO_DEG;
 
         const float v_fl_rps = (target_vx - target_vy - target_omega_rad * K) / PERIMETER_WHEEL_M;
         const float v_fr_rps = (target_vx + target_vy + target_omega_rad * K) / PERIMETER_WHEEL_M;

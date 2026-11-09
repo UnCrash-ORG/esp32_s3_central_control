@@ -25,7 +25,7 @@ namespace robot
         {
             float target_vx_m;
             float target_vy_m;
-            float target_omega_degrees;
+            float target_omega_rad;
             std::mutex target_speed_mutex;
         };
         struct task_handles

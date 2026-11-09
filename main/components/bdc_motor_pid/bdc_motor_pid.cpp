@@ -11,7 +11,6 @@
 
 using namespace robot;
 
-constexpr float DEG_TO_RAD = 180.0f * std::numbers::pi_v<float>;
 
 bdc_motor_pid::bdc_motor_pid(
     const motor_config_t& motor_config,
@@ -92,7 +91,7 @@ bdc_motor_pid::bdc_motor_pid(
     ESP_ERROR_CHECK(bdc_motor_enable(motor_handle));
 }
 
-void bdc_motor_pid::control_task(const float target_rps, const float pitch)
+void bdc_motor_pid::control_task(const float target_rps, const float pitch_degree)
 {
     //Read and reset ticks cnt
     int ticks;
@@ -115,7 +114,7 @@ void bdc_motor_pid::control_task(const float target_rps, const float pitch)
     //Apply next rpm
     config_lock.lock();
     if (const auto next_speed = update(target_rps - now_rps) +
-        kg * std::sin(pitch / DEG_TO_RAD); next_speed > 0)
+        kg * std::sin((pitch_degree / 180.0f) * std::numbers::pi_v<float>); next_speed > 0)
     {
         config_lock.unlock();
         bdc_motor_forward(motor_handle);

@@ -50,4 +50,4 @@ To specify the serial port, add `--upload-port <port>` to the upload command. Se
 
 ## Continuous integration
 
-GitHub Actions runs PlatformIO static analysis and builds the firmware on pushes to `main` and pull requests targeting `main`. Firmware artifacts are available from successful workflow runs. There are currently no automated test cases.
+GitHub Actions runs PlatformIO static analysis and builds the firmware on pushes to `feat/*` and `fix/*` branches, and on pull requests targeting `main`. Firmware artifacts are available from successful workflow runs. There are currently no automated test cases.

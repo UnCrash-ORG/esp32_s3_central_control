@@ -6,15 +6,18 @@
 #include "driver/pulse_cnt.h"
 #include "bdc_motor.h"
 #include "esp_timer.h"
+#include "cmath"
+#include "numbers"
 
 using namespace robot;
 
+
 bdc_motor_pid::bdc_motor_pid(
     const motor_config_t& motor_config,
-    const espp::Pid::Config& pid_config): Pid(pid_config), motor_config(motor_config)
+    const espp::Pid::Config& pid_config) : Pid(pid_config), motor_config(motor_config)
 {
     //Create PCNT Unit
-    constexpr pcnt_unit_config_t pcnt_unit_config {
+    constexpr pcnt_unit_config_t pcnt_unit_config{
         .low_limit = PULSE_CNT_LOW_LIMIT,
         .high_limit = PULSE_CNT_HIGH_LIMIT,
     };
@@ -25,11 +28,11 @@ bdc_motor_pid::bdc_motor_pid(
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_unit_handle, &filter_config));
 
     //Create PCNT Channel
-    const pcnt_chan_config_t pcnt_chan_config_a {
+    const pcnt_chan_config_t pcnt_chan_config_a{
         .edge_gpio_num = motor_config.cnt_a,
         .level_gpio_num = motor_config.cnt_b,
     };
-    const pcnt_chan_config_t pcnt_chan_config_b {
+    const pcnt_chan_config_t pcnt_chan_config_b{
         .edge_gpio_num = motor_config.cnt_b,
         .level_gpio_num = motor_config.cnt_a
     };
@@ -38,9 +41,9 @@ bdc_motor_pid::bdc_motor_pid(
 
     //Set PCNT ChannelA Actions
     ESP_ERROR_CHECK(pcnt_channel_set_edge_action(
-    pcnt_chan_a_handle,
-    PCNT_CHANNEL_EDGE_ACTION_DECREASE,
-    PCNT_CHANNEL_EDGE_ACTION_INCREASE
+        pcnt_chan_a_handle,
+        PCNT_CHANNEL_EDGE_ACTION_DECREASE,
+        PCNT_CHANNEL_EDGE_ACTION_INCREASE
     ));
 
     ESP_ERROR_CHECK(pcnt_channel_set_level_action(
@@ -70,35 +73,39 @@ bdc_motor_pid::bdc_motor_pid(
 
 
     //Create BDC Motor
-    bdc_motor_config_t bdc_motor_config {
+    bdc_motor_config_t bdc_motor_config{
         .pwma_gpio_num = static_cast<uint32_t>(motor_config.pwm_a),
         .pwmb_gpio_num = static_cast<uint32_t>(motor_config.pwm_b),
         .pwm_freq_hz = PWM_FREQ_HZ
     };
-    const bdc_motor_mcpwm_config_t bdc_motor_mcpwm_config {
+    const bdc_motor_mcpwm_config_t bdc_motor_mcpwm_config{
         .group_id = motor_config.mcpwm_group,
         .resolution_hz = MCPWM_RESOLUTION_HZ,
     };
     ESP_ERROR_CHECK(
-    bdc_motor_new_mcpwm_device(
-        &bdc_motor_config,
-        &bdc_motor_mcpwm_config,
-        &motor_handle
-    ));
+        bdc_motor_new_mcpwm_device(
+            &bdc_motor_config,
+            &bdc_motor_mcpwm_config,
+            &motor_handle
+        ));
     ESP_ERROR_CHECK(bdc_motor_enable(motor_handle));
 }
 
-void bdc_motor_pid::control_task(const float target_rps)
+void bdc_motor_pid::control_task(const float target_rps, const float pitch_degree)
 {
     //Read and reset ticks cnt
     int ticks;
-    
+
     ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit_handle, &ticks));
     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit_handle));
 
     //Calc last rps
-    if (last_seen == 0){last_seen = esp_timer_get_time(); return;}
-    const auto now_time= esp_timer_get_time();
+    if (last_seen == 0)
+    {
+        last_seen = esp_timer_get_time();
+        return;
+    }
+    const auto now_time = esp_timer_get_time();
     const auto now_ticks_per_sec = static_cast<float>(ticks) / (static_cast<float>(now_time - last_seen) / 1e6f);
     now_rps = now_ticks_per_sec / static_cast<float>(motor_config.ticks_per_lap);
 
@@ -106,12 +113,14 @@ void bdc_motor_pid::control_task(const float target_rps)
 
     //Apply next rpm
     config_lock.lock();
-    if (const auto next_speed = update(target_rps - now_rps); next_speed > 0)
+    if (const auto next_speed = update(target_rps - now_rps) +
+        kg * std::sin((pitch_degree / 180.0f) * std::numbers::pi_v<float>); next_speed > 0)
     {
         config_lock.unlock();
         bdc_motor_forward(motor_handle);
         bdc_motor_set_speed(motor_handle, std::abs(std::lround(next_speed)));
-    }else
+    }
+    else
     {
         config_lock.unlock();
         bdc_motor_reverse(motor_handle);

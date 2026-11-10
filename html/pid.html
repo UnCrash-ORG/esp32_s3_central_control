@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PID 参数</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+         background:#0f1115; color:#e6e6e6; }
+  header { display:flex; gap:24px; padding:14px 20px; background:#1a1d25; border-bottom:1px solid #2a2e3a; align-items:center; }
+  header h1 { font-size:18px; margin:0; }
+  nav a { color:#9aa3b2; text-decoration:none; padding:6px 12px; border-radius:6px; }
+  nav a.active { background:#2a3040; color:#e6e6e6; }
+  main { padding:18px; display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); }
+  .card { background:#1a1d25; border:1px solid #2a2e3a; border-radius:10px; padding:16px; }
+  .card h2 { margin:0 0 12px; font-size:15px; color:#f97316; }
+  .row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .row label { width:64px; color:#9aa3b2; font-size:13px; }
+  .row input { flex:1; background:#0f1115; border:1px solid #2a2e3a; border-radius:6px;
+               color:#e6e6e6; padding:6px 10px; font-variant-numeric: tabular-nums; font-size:14px; }
+  .row input:focus { outline:none; border-color:#f97316; }
+  .actions { display:flex; gap:8px; margin-top:14px; }
+  button { flex:1; background:#f97316; color:#fff; border:none; border-radius:6px; padding:8px 12px;
+           font-size:13px; cursor:pointer; transition: background .15s; }
+  button:hover { background:#ea580c; }
+  button.ghost { background:#2a2e3a; color:#e6e6e6; }
+  button.ghost:hover { background:#373c4c; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+           background:#3bd16a; color:#0a0f12; padding:8px 18px; border-radius:20px;
+           font-size:13px; opacity:0; transition:opacity .25s; pointer-events:none; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🦾 机器人控制台</h1>
+  <nav>
+    <a href="/">实时姿态</a>
+    <a class="active" href="/pid">PID 参数</a>
+    <a href="/tools">综合工具</a>
+  </nav>
+</header>
+
+<main id="grid"></main>
+
+<div class="actions" style="padding:0 18px 24px;">
+  <button id="applyAll" style="background:#22d3ee;color:#0a0f12;">一键下发四轮</button>
+  <button id="refresh" class="ghost">从设备读取</button>
+</div>
+
+<div id="toast" class="toast">已保存</div>
+
+<script>
+(function(){
+  const WHEELS = [
+    { idx:0, name:'左轮前 FL', color:'#f97316' },
+    { idx:1, name:'右轮前 FR', color:'#22d3ee' },
+    { idx:2, name:'左轮后 RL', color:'#a78bfa' },
+    { idx:3, name:'右轮后 RR', color:'#3bd16a' },
+  ];
+
+  const $toast = document.getElementById('toast');
+  let toastT;
+  function toast(msg){
+    $toast.textContent = msg;
+    $toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>$toast.classList.remove('show'), 1500);
+  }
+
+  // 渲染四个卡片
+  const grid = document.getElementById('grid');
+  const state = []; // 每个轮子的 input 引用
+  WHEELS.forEach(w => {
+    const card = document.createElement('section');
+    card.className = 'card';
+    card.innerHTML = `
+      <h2 style="color:${w.color}">${w.name}</h2>
+      <div class="row"><label>Kp</label><input data-kp type="number" step="0.001"></div>
+      <div class="row"><label>Ki</label><input data-ki type="number" step="0.001"></div>
+      <div class="row"><label>Kd</label><input data-kd type="number" step="0.001"></div>
+      <div class="row"><label>OutMin</label><input data-out_min type="number" step="0.1"></div>
+      <div class="row"><label>OutMax</label><input data-out_max type="number" step="0.1"></div>
+      <div class="actions"><button data-save="${w.idx}">保存该轮</button></div>
+    `;
+    grid.appendChild(card);
+    state.push({ idx:w.idx, card });
+  });
+
+  function readCard(card) {
+    return {
+      kp:     +card.querySelector('[data-kp]').value,
+      ki:     +card.querySelector('[data-ki]').value,
+      kd:     +card.querySelector('[data-kd]').value,
+      out_min:+card.querySelector('[data-out_min]').value,
+      out_max:+card.querySelector('[data-out_max]').value,
+    };
+  }
+  function writeCard(card, pid) {
+    card.querySelector('[data-kp]').value      = pid.kp.toFixed(3);
+    card.querySelector('[data-ki]').value      = pid.ki.toFixed(3);
+    card.querySelector('[data-kd]').value      = pid.kd.toFixed(3);
+    card.querySelector('[data-out_min]').value = pid.out_min.toFixed(1);
+    card.querySelector('[data-out_max]').value = pid.out_max.toFixed(1);
+  }
+
+  async function api(url, opts){
+    const r = await fetch(url, opts);
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+
+  // 绑定每个"保存该轮"按钮
+  grid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-save]');
+    if (!btn) return;
+    const idx = +btn.dataset.save;
+    const data = readCard(state[idx].card);
+    try {
+      await api('/api/pid?wheel='+idx, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      });
+      toast(WHEELS[idx].name + ' 已保存');
+    } catch(err) { toast('保存失败: ' + err.message); }
+  });
+
+  // 一键下发四轮
+  document.getElementById('applyAll').onclick = async () => {
+    const wheels = state.map(s => readCard(s.card));
+    try {
+      await api('/api/pid/all', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ wheels })
+      });
+      toast('四轮已下发');
+    } catch(err) { toast('下发失败: ' + err.message); }
+  };
+
+  // 刷新
+  document.getElementById('refresh').onclick = async () => {
+    try {
+      const j = await api('/api/pid');
+      j.wheels.forEach((p,i) => writeCard(state[i].card, p));
+      toast('已读取');
+    } catch(err) { toast('读取失败: ' + err.message); }
+  };
+
+  // 页面加载时自动读一次
+  document.getElementById('refresh').onclick();
+})();
+</script>
+</body>
+</html>

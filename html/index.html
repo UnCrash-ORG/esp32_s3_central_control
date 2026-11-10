@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>机器人姿态 · 实时数据</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         background:#0f1115; color:#e6e6e6; }
+  header { display:flex; gap:24px; padding:14px 20px; background:#1a1d25; border-bottom:1px solid #2a2e3a; align-items:center; }
+  header h1 { font-size:18px; margin:0; }
+  nav a { color:#9aa3b2; text-decoration:none; padding:6px 12px; border-radius:6px; }
+  nav a.active { background:#2a3040; color:#e6e6e6; }
+  .status { margin-left:auto; font-size:13px; color:#888; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .dot.on  { background:#3bd16a; box-shadow:0 0 6px #3bd16a; }
+  .dot.off { background:#f04458; }
+  main { padding:18px; display:grid; gap:16px; }
+  .chart-card { background:#1a1d25; border:1px solid #2a2e3a; border-radius:10px; padding:14px 16px; }
+  .chart-card h2 { font-size:14px; margin:0 0 10px; color:#9aa3b2; letter-spacing:.3px; }
+  .chart-wrap { height:220px; position:relative; }
+  .val-row { display:flex; gap:16px; margin-top:8px; font-size:13px; color:#b8bcc6; }
+  .val-row b { color:#fff; font-weight:600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🦾 机器人控制台</h1>
+  <nav>
+    <a class="active" href="/">实时姿态</a>
+    <a href="/pid">PID 参数</a>
+    <a href="/tools">综合工具</a>
+  </nav>
+  <div class="status"><span id="dot" class="dot off"></span><span id="stxt">未连接</span></div>
+</header>
+
+<main>
+  <section class="chart-card">
+    <h2>加速度 Acc (g)</h2>
+    <div class="chart-wrap"><canvas id="accChart"></canvas></div>
+    <div class="val-row">
+      <span>X <b id="vx">0.000</b></span>
+      <span>Y <b id="vy">0.000</b></span>
+      <span>Z <b id="vz">0.000</b></span>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <h2>角速度 Gyr (deg/s)</h2>
+    <div class="chart-wrap"><canvas id="gyrChart"></canvas></div>
+    <div class="val-row">
+      <span>X <b id="gx">0.000</b></span>
+      <span>Y <b id="gy">0.000</b></span>
+      <span>Z <b id="gz">0.000</b></span>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <h2>姿态角 Attitude (deg)</h2>
+    <div class="chart-wrap"><canvas id="attChart"></canvas></div>
+    <div class="val-row">
+      <span>Pitch <b id="ap">0.00</b></span>
+      <span>Roll <b id="ar">0.00</b></span>
+      <span>Yaw <b id="ay">0.00</b></span>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const MAX_PTS = 120; // 约 12 秒 @ 100ms
+  const COLORS = { x:'#f97316', y:'#22d3ee', z:'#a78bfa' };
+
+  const common = (title) => ({
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label:'X', data:[], borderColor:COLORS.x, backgroundColor:COLORS.x+'33', pointRadius:0, borderWidth:2, tension:.2 },
+        { label:'Y', data:[], borderColor:COLORS.y, backgroundColor:COLORS.y+'33', pointRadius:0, borderWidth:2, tension:.2 },
+        { label:'Z', data:[], borderColor:COLORS.z, backgroundColor:COLORS.z+'33', pointRadius:0, borderWidth:2, tension:.2 },
+      ]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'nearest', intersect:false },
+      plugins: { legend: { labels:{ color:'#b8bcc6', boxWidth:12 } } },
+      scales: {
+        x: { ticks:{ color:'#6b7280', maxTicksLimit:6 }, grid:{ color:'#232732' } },
+        y: { ticks:{ color:'#b8bcc6' }, grid:{ color:'#232732' } }
+      }
+    }
+  });
+
+  const acc = new Chart(document.getElementById('accChart'), common('Acc'));
+  const gyr = new Chart(document.getElementById('gyrChart'), common('Gyr'));
+  const att = new Chart(document.getElementById('attChart'), common('Att'));
+
+  function push(c, v) {
+    c.data.labels.push('');
+    c.data.datasets.forEach((ds, i) => ds.data.push(v[i]));
+    if (c.data.labels.length > MAX_PTS) {
+      c.data.labels.shift();
+      c.data.datasets.forEach(ds => ds.data.shift());
+    }
+    c.update('none');
+  }
+
+  function fmt(x, n) { return Number(x).toFixed(n); }
+
+  function onMsg(msg){
+    document.getElementById('vx').textContent = fmt(msg.acc[0],3);
+    document.getElementById('vy').textContent = fmt(msg.acc[1],3);
+    document.getElementById('vz').textContent = fmt(msg.acc[2],3);
+    document.getElementById('gx').textContent = fmt(msg.gyr[0],3);
+    document.getElementById('gy').textContent = fmt(msg.gyr[1],3);
+    document.getElementById('gz').textContent = fmt(msg.gyr[2],3);
+    document.getElementById('ap').textContent = fmt(msg.att[0],2);
+    document.getElementById('ar').textContent = fmt(msg.att[1],2);
+    document.getElementById('ay').textContent = fmt(msg.att[2],2);
+
+    push(acc, msg.acc);
+    push(gyr, msg.gyr);
+    push(att, msg.att);
+  }
+
+  function connect(){
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(proto + '//' + location.host + '/ws');
+    const dot = document.getElementById('dot');
+    const stxt = document.getElementById('stxt');
+    ws.onopen  = () => { dot.className='dot on';  stxt.textContent='已连接'; };
+    ws.onclose = () => { dot.className='dot off'; stxt.textContent='重连中...'; setTimeout(connect, 1500); };
+    ws.onerror = () => ws.close();
+    ws.onmessage = (e) => {
+      try { onMsg(JSON.parse(e.data)); } catch(_) {}
+    };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

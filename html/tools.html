@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>综合工具</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+         background:#0f1115; color:#e6e6e6; }
+  header { display:flex; gap:24px; padding:14px 20px; background:#1a1d25; border-bottom:1px solid #2a2e3a; align-items:center; }
+  header h1 { font-size:18px; margin:0; }
+  nav a { color:#9aa3b2; text-decoration:none; padding:6px 12px; border-radius:6px; }
+  nav a.active { background:#2a3040; color:#e6e6e6; }
+  main { padding:18px; display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); }
+  .card { background:#1a1d25; border:1px solid #2a2e3a; border-radius:10px; padding:18px; }
+  .card h2 { margin:0 0 14px; font-size:15px; color:#22d3ee; }
+  .card h3 { margin:14px 0 8px; font-size:13px; color:#9aa3b2; }
+
+  /* 电池 */
+  .bat-row { display:flex; align-items:center; gap:14px; }
+  .bat-box { width:90px; height:32px; border:2px solid #2a2e3a; border-radius:5px; padding:2px;
+             position:relative; background:#0f1115; }
+  .bat-box::after { content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%);
+                    width:4px; height:14px; background:#2a2e3a; border-radius:0 2px 2px 0; }
+  .bat-fill { height:100%; border-radius:2px; transition: width .3s, background .3s; }
+  .bat-text { font-size:22px; font-variant-numeric: tabular-nums; font-weight:700; }
+  .bat-sub  { font-size:12px; color:#9aa3b2; }
+
+  /* IMU */
+  .cal-info { color:#9aa3b2; font-size:13px; line-height:1.6; margin-bottom:12px; }
+
+  /* OTA */
+  .dropzone { border:2px dashed #2a2e3a; border-radius:8px; padding:30px 20px;
+              text-align:center; color:#6b7280; cursor:pointer; transition:all .15s; }
+  .dropzone.hover { border-color:#f97316; color:#f97316; }
+  .dropzone input { display:none; }
+  .progress { margin-top:10px; height:10px; background:#0f1115; border:1px solid #2a2e3a; border-radius:5px; overflow:hidden; display:none; }
+  .progress.show { display:block; }
+  .progress > div { height:100%; width:0; background:#f97316; transition: width .2s; }
+  .ota-status { margin-top:8px; font-size:13px; color:#9aa3b2; }
+
+  button { background:#f97316; color:#fff; border:none; border-radius:6px; padding:8px 14px;
+           font-size:13px; cursor:pointer; transition: background .15s; }
+  button:hover { background:#ea580c; }
+  button.ghost { background:#2a2e3a; color:#e6e6e6; }
+  button.ghost:hover { background:#373c4c; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🦾 机器人控制台</h1>
+  <nav>
+    <a href="/">实时姿态</a>
+    <a href="/pid">PID 参数</a>
+    <a class="active" href="/tools">综合工具</a>
+  </nav>
+</header>
+
+<main>
+  <!-- 电池 -->
+  <section class="card">
+    <h2>🔋 电池电压</h2>
+    <div class="bat-row">
+      <div class="bat-box"><div id="batFill" class="bat-fill" style="width:50%;background:#22d3ee"></div></div>
+      <div>
+        <div><span id="batV" class="bat-text">0.00</span><span style="color:#9aa3b2"> V</span></div>
+        <div id="batSub" class="bat-sub">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMU -->
+  <section class="card">
+    <h2>🧭 IMU</h2>
+    <div class="cal-info">
+      重新校准前请将机器人水平静止放置，点击下方按钮后会进行 2 秒的零偏采样。
+    </div>
+    <button id="calBtn">重新校准 IMU</button>
+    <div id="calStatus" class="ota-status" style="margin-top:10px"></div>
+  </section>
+
+  <!-- 固件上传 -->
+  <section class="card">
+    <h2>⬆️ 固件升级 (OTA)</h2>
+    <div id="dropzone" class="dropzone">
+      <input id="fileInput" type="file" accept=".bin">
+      把 .bin 固件拖到这里，或 <b style="color:#f97316">点击选择文件</b>
+    </div>
+    <div class="progress" id="progress"><div></div></div>
+    <div id="otaStatus" class="ota-status"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  /* ---- 电池：优先从 WS 拿，定时兜底 ---- */
+  const batV = document.getElementById('batV');
+  const batSub = document.getElementById('batSub');
+  const batFill = document.getElementById('batFill');
+
+  function updateBattery(v){
+    batV.textContent = v.toFixed(2);
+    // 假设 3S 锂电池 10.8V~12.6V
+    const pct = Math.max(0, Math.min(1, (v - 10.5) / (12.6 - 10.5)));
+    batFill.style.width = (pct*100).toFixed(1)+'%';
+    if (pct < 0.15)       batFill.style.background = '#f04458';
+    else if (pct < 0.4)   batFill.style.background = '#f97316';
+    else                  batFill.style.background = '#3bd16a';
+    batSub.textContent = '≈ ' + (pct*100).toFixed(0) + '%';
+  }
+
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  function connectWs(){
+    const ws = new WebSocket(proto + '//' + location.host + '/ws');
+    ws.onmessage = (e) => {
+      try { const m = JSON.parse(e.data); if (typeof m.bat === 'number') updateBattery(m.bat); } catch(_){}
+    };
+    ws.onclose = () => setTimeout(connectWs, 1500);
+  }
+  connectWs();
+
+  // 兜底 GET /api/battery 每 5s
+  async function refreshBat(){
+    try { const j = await fetch('/api/battery').then(r=>r.json()); updateBattery(j.voltage); } catch(_){}
+  }
+  refreshBat();
+  setInterval(refreshBat, 5000);
+
+  /* ---- IMU 校准 ---- */
+  const calBtn = document.getElementById('calBtn');
+  const calStatus = document.getElementById('calStatus');
+  calBtn.onclick = async () => {
+    calBtn.disabled = true;
+    calStatus.textContent = '正在校准...';
+    try {
+      await fetch('/api/calibrate', { method:'POST' });
+      calStatus.textContent = '✓ 已下发校准命令';
+    } catch(err) { calStatus.textContent = '✗ 失败: ' + err.message; }
+    finally { calBtn.disabled = false; }
+  };
+
+  /* ---- OTA 固件上传 ---- */
+  const dz = document.getElementById('dropzone');
+  const fi = document.getElementById('fileInput');
+  const pr = document.getElementById('progress');
+  const prBar = pr.querySelector('div');
+  const otaStatus = document.getElementById('otaStatus');
+
+  dz.addEventListener('click', () => fi.click());
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('hover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
+  dz.addEventListener('drop',      e => {
+    e.preventDefault(); dz.classList.remove('hover');
+    if (e.dataTransfer.files.length) upload(e.dataTransfer.files[0]);
+  });
+  fi.addEventListener('change', () => { if (fi.files.length) upload(fi.files[0]); });
+
+  async function upload(file){
+    pr.classList.add('show');
+    prBar.style.width = '0%';
+    otaStatus.textContent = '上传中: ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const xhr = new XMLHttpRequest();
+      await new Promise((resolve, reject) => {
+        xhr.open('POST', '/api/ota', true);
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) prBar.style.width = (e.loaded/e.total*100).toFixed(1) + '%';
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try { otaStatus.textContent = '✓ 完成: ' + JSON.parse(xhr.responseText).note; }
+            catch(_){ otaStatus.textContent = '✓ 完成'; }
+            resolve();
+          } else reject(new Error('HTTP '+xhr.status));
+        };
+        xhr.onerror = () => reject(new Error('network error'));
+        xhr.send(fd);
+      });
+    } catch(err) {
+      otaStatus.textContent = '✗ 失败: ' + err.message;
+    }
+  }
+})();
+</script>
+</body>
+</html>

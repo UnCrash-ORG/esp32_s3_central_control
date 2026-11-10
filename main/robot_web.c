@@ -19,8 +19,13 @@
  * robot_web.c - Web 控制台核心（ESP-IDF 6.1 最终版）
  */
 
-/* 强制开启 WS API —— PlatformIO sdkconfig 不生效，直接代码里定义 */
+/* 强制开启 WS API —— PlatformIO sdkconfig 不生效 */
+#ifndef CONFIG_HTTPD_WS_SUPPORT
 #define CONFIG_HTTPD_WS_SUPPORT 1
+#endif
+
+/* 前向声明 —— 定义在文件末尾 */
+extern httpd_handle_t s_httpd_handle_for_ws;
 #include "robot_web.h"
 
 #include <stdio.h>
@@ -336,7 +341,7 @@ static esp_err_t h_ws(httpd_req_t *req) {
     memset(&frame, 0, sizeof(frame));
     uint8_t rx_buf[256];
     frame.payload = rx_buf;
-    frame.max_len = sizeof(rx_buf);
+
 
     esp_err_t err = httpd_ws_recv_frame(req, &frame, 0);
     if (err != ESP_OK) {

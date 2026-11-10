@@ -1,12 +1,8 @@
-/**
- * robot_web.h - 机器人 Web 控制台对外接口
- *
- * 设计要点：
- *   1. 所有业务逻辑（定时采集、WS 推送、HTTP 副作用）集中在一个 FreeRTOS 任务里。
- *   2. HTTP handler 只做轻量解析 + 投递队列，不阻塞。
- *   3. 共享数据用 mutex 保护快照一致性。
- */
 #pragma once
+
+#ifndef CONFIG_HTTPD_WS_SUPPORT
+#define CONFIG_HTTPD_WS_SUPPORT 1
+#endif
 
 #ifdef __cplusplus
 extern "C" {

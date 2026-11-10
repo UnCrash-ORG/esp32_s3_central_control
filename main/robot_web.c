@@ -15,7 +15,12 @@
  *   - httpd_ws_frame_t.is_finished → .final（字段改名）
  *   - index.html 符号名和 libc index() 冲突 —— 改名为 home.html
  */
+/**
+ * robot_web.c - Web 控制台核心（ESP-IDF 6.1 最终版）
+ */
 
+/* 强制开启 WS API —— PlatformIO sdkconfig 不生效，直接代码里定义 */
+#define CONFIG_HTTPD_WS_SUPPORT 1
 #include "robot_web.h"
 
 #include <stdio.h>

@@ -1,13 +1,4 @@
 /**
- * robot_web.c - Web 控制台核心（ESP-IDF 6.1 兼容版）
- *
- * 结构：
- *   - 一个 FreeRTOS 任务 web_console_task：每 100ms 采集 IMU 并通过 WS 广播
- *   - HTTP server：三个静态页面 + /api/pid(GET/POST) + /api/pid/all(POST)
- *     + /api/battery(GET) + /api/calibrate(POST) + /api/ota 固件上传
- *   - WebSocket server：注册 ws_handler，维护在线 fd 集合，
- *     主任务通过 ws_broadcast_json 推给所有在线 client
- *
  * ESP-IDF 6.1 变更：
  *   - 整个 WS API 被 CONFIG_HTTPD_WS_SUPPORT 包起来，sdkconfig 里必须开启
  *   - httpd_ws_send_frame_to_all_clients 被移除 —— 自己遍历 fd 数组发送
@@ -19,13 +10,6 @@
  * robot_web.c - Web 控制台核心（ESP-IDF 6.1 最终版）
  */
 
-/* 强制开启 WS API —— PlatformIO sdkconfig 不生效 */
-#ifndef CONFIG_HTTPD_WS_SUPPORT
-#define CONFIG_HTTPD_WS_SUPPORT 1
-#endif
-
-/* 前向声明 —— 定义在文件末尾 */
-extern httpd_handle_t s_httpd_handle_for_ws;
 #include "robot_web.h"
 
 #include <stdio.h>

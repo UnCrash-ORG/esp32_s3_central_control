@@ -8,14 +8,14 @@
  */
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "esp_err.h"
 #include "esp_http_server.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* ---------- 类型定义 ---------- */
 

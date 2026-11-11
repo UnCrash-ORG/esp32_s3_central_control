@@ -100,14 +100,14 @@ using namespace robot;
                 );
                 if (true_crc32 != recv_msg->payload.set_speed.crc32) continue;
 
-                const auto target_vx = recv_msg->payload.set_speed.vx;
-                const auto target_vy = recv_msg->payload.set_speed.vy;
-                const auto target_omega = recv_msg->payload.set_speed.omega;
+                const auto target_vx = recv_msg->payload.set_speed.vx_m;
+                const auto target_vy = recv_msg->payload.set_speed.vy_m;
+                const auto target_yaw = recv_msg->payload.set_speed.yaw_rad;
                 // Enter sharing variables critical
                 sharing_contents->sharing_variables.target_speed_mutex.lock();
                 sharing_contents->sharing_variables.target_vx_m = target_vx;
                 sharing_contents->sharing_variables.target_vy_m = target_vy;
-                sharing_contents->sharing_variables.target_omega_rad = target_omega;
+                sharing_contents->sharing_variables.target_yaw_rad = target_yaw;
                 sharing_contents->sharing_variables.target_speed_mutex.unlock();
                 // Leave sharing variables critical
                 send_msg.header.type = uart::msg_type::RESPOND_OK;

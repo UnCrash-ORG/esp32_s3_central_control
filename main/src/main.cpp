@@ -2,11 +2,19 @@
 #include "include/pin_config.h"
 #include "freertos/FreeRTOS.h"
 #include "include/my_tasks.h"
+#include "include/pid_storage.h"
 
 using namespace robot;
 
 extern "C" void app_main()
 {
+    ESP_ERROR_CHECK(pid_storage::initialize());
+    std::array<espp::Pid::Config, 4> motor_pid_configs{};
+    ESP_ERROR_CHECK(pid_storage::load(pid_storage::Controller::motor1, motor_pid_configs[0]));
+    ESP_ERROR_CHECK(pid_storage::load(pid_storage::Controller::motor2, motor_pid_configs[1]));
+    ESP_ERROR_CHECK(pid_storage::load(pid_storage::Controller::motor3, motor_pid_configs[2]));
+    ESP_ERROR_CHECK(pid_storage::load(pid_storage::Controller::motor4, motor_pid_configs[3]));
+
     // Initialize MPU6050
     gy521 imu = gy521({
         .gy521_scl = pins::MPU6050_SCL,
@@ -24,7 +32,7 @@ extern "C" void app_main()
                 .pwm_b = pins::MOTOR1_IN2_PIN,
                 .cnt_a = pins::ENC1_A_PIN,
                 .cnt_b = pins::ENC1_B_PIN,
-            }, {}), //TODO
+            }, motor_pid_configs[0]),
         bdc_motor_pid(
             {
                 .mcpwm_group = 0,
@@ -33,7 +41,7 @@ extern "C" void app_main()
                 .pwm_b = pins::MOTOR2_IN2_PIN,
                 .cnt_a = pins::ENC2_A_PIN,
                 .cnt_b = pins::ENC2_B_PIN,
-            }, {}), //TODO
+            }, motor_pid_configs[1]),
         bdc_motor_pid(
             {
                 .mcpwm_group = 1,
@@ -42,7 +50,7 @@ extern "C" void app_main()
                 .pwm_b = pins::MOTOR3_IN2_PIN,
                 .cnt_a = pins::ENC3_A_PIN,
                 .cnt_b = pins::ENC3_B_PIN,
-            }, {}), //TODO
+            }, motor_pid_configs[2]),
         bdc_motor_pid(
             {
                 .mcpwm_group = 1,
@@ -51,10 +59,10 @@ extern "C" void app_main()
                 .pwm_b = pins::MOTOR4_IN2_PIN,
                 .cnt_a = pins::ENC4_A_PIN,
                 .cnt_b = pins::ENC4_B_PIN,
-            }, {}), //TODO
+            }, motor_pid_configs[3]),
     };
 
-    //Imitialize Servo
+    //Initialize Servo
     std::array<servo_handle_t, 4> servos = {};
     constexpr std::array servo_pins = {pins::SERVO1_PIN, pins::SERVO2_PIN, pins::SERVO3_PIN, pins::SERVO4_PIN};
     constexpr std::array servo_pwm_channels = {LEDC_CHANNEL_0, LEDC_CHANNEL_1, LEDC_CHANNEL_2, LEDC_CHANNEL_3};

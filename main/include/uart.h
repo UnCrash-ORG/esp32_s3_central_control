@@ -54,9 +54,9 @@ namespace robot::uart
     // Payload for ACQUIRE_SET_SPEED (16 bytes total: 12B data + 4B CRC32)
     struct alignas(4) payload_acquire_set_speed
     {
-        float vx; // Linear velocity X (m/s)
-        float vy; // Linear velocity Y (m/s)
-        float omega; // Angular velocity (rad/s)
+        float vx_m; // Linear velocity X (m/s)
+        float vy_m; // Linear velocity Y (m/s)
+        float yaw_rad; // Yaw (rad)
         uint32_t crc32; // CRC-32 calculated over header + data
     };
 
@@ -89,9 +89,9 @@ namespace robot::uart
         float gx; // Gyroscope X (rad/s)
         float gy; // Gyroscope Y (rad/s)
         float gz; // Gyroscope Z (rad/s)
-        float yaw; // Orientation Yaw (deg or rad)
-        float pitch; // Orientation Pitch (deg or rad)
-        float roll; // Orientation Roll (deg or rad)
+        float yaw; // Orientation Yaw (rad)
+        float pitch; // Orientation Pitch (rad)
+        float roll; // Orientation Roll (rad)
         uint32_t crc32; // CRC-32 calculated over header + data
     };
 

@@ -9,6 +9,10 @@
 
 namespace robot
 {
+
+    constexpr float G = 9.80665f;
+    constexpr float DEG_TO_RAD = std::numbers::pi_v<float> / 180.0f;
+
     gy521::gy521(const gy521_config_t& config) : config(config)
     {
         const i2c_master_bus_config_t i2c_bus_config{
@@ -71,17 +75,24 @@ namespace robot
             gyro_value.gyro_y -= correction_gy;
             gyro_value.gyro_z -= correction_gz;
             const auto duration = static_cast<float>(esp_timer_get_time() - last_seen) / 1e6f;
-            updateIMU(gyro_value.gyro_x, gyro_value.gyro_y, gyro_value.gyro_z, accel_value.accel_x, accel_value.accel_y, accel_value.accel_z, duration);
+            updateIMU(
+                gyro_value.gyro_x,
+                gyro_value.gyro_y,
+                gyro_value.gyro_z,
+                accel_value.accel_x * G,
+                accel_value.accel_y * G,
+                accel_value.accel_z * G,
+                duration);
             const auto data = gy521_data_t{
-                .ax = accel_value.accel_x,
-                .ay = accel_value.accel_y,
-                .az = accel_value.accel_z,
-                .gx = gyro_value.gyro_x,
-                .gy = gyro_value.gyro_y,
-                .gz = gyro_value.gyro_z,
-                .yaw = getYaw(),
-                .pitch = getPitch(),
-                .roll = getRoll()
+                .ax_m = accel_value.accel_x * G,
+                .ay_m = accel_value.accel_y * G,
+                .az_m = accel_value.accel_z * G,
+                .gx_rad = gyro_value.gyro_x * DEG_TO_RAD,
+                .gy_rad = gyro_value.gyro_y * DEG_TO_RAD,
+                .gz_rad = gyro_value.gyro_z * DEG_TO_RAD,
+                .yaw_rad = getYawRadians(),
+                .pitch_rad = getPitchRadians(),
+                .roll_rad = getRollRadians()
             };
             last_seen = esp_timer_get_time();
             buffer = data;

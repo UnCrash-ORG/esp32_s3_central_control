@@ -35,7 +35,7 @@ namespace robot
             gpio_num_t cnt_b;
         };
         bdc_motor_pid(const motor_config_t& motor_config, const espp::Pid::Config& pid_config);
-        void control_task(float target_rps, float pitch_degree);
+        void control_task(float target_rps, float pitch_rad);
         void temporary_override_pid(const Config& config);
         float get_now_rps();
 

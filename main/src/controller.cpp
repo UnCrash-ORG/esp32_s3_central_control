@@ -43,9 +43,9 @@ constexpr TickType_t FREQ_MS = pdMS_TO_TICKS(10);
         const float v_rr_rps = (target_vx - target_vy + target_omega_rad * K) / PERIMETER_WHEEL_M;
 
         sharing_contents->devices.motors[0].control_task(v_fl_rps, pitch);
-        sharing_contents->devices.motors[0].control_task(v_fr_rps, pitch);
-        sharing_contents->devices.motors[0].control_task(v_rl_rps, pitch);
-        sharing_contents->devices.motors[0].control_task(v_rr_rps, pitch);
+        sharing_contents->devices.motors[1].control_task(v_fr_rps, pitch);
+        sharing_contents->devices.motors[2].control_task(v_rl_rps, pitch);
+        sharing_contents->devices.motors[3].control_task(v_rr_rps, pitch);
 
         xTaskDelayUntil( &xLastWakeTime, FREQ_MS );
     }

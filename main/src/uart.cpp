@@ -63,7 +63,7 @@ using namespace robot;
         const uart::packet* recv_msg = reinterpret_cast<uart::packet*>(rx_buffer);
 
         //Make sure Packet header is right
-        if (recv_msg != nullptr and memcmp(recv_msg->header.magic, uart::MAGIC_NUM, 2) != 0) continue;
+        if (memcmp(recv_msg->header.magic, uart::MAGIC_NUM, 2) != 0) continue;
         uart::packet send_msg{};
         memcpy(send_msg.header.magic, uart::MAGIC_NUM, 2);
         switch (recv_msg->header.type)

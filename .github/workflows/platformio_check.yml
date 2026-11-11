@@ -1,11 +1,15 @@
-name: PlatformIO Check
+name: PlatformIO CI
 
 on:
   push:
-    branches: ['feat/*', 'fix/*']
+    branches: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   platformio_check:
@@ -29,4 +33,33 @@ jobs:
       - name: Install PlatformIO
         run: python -m pip install platformio
       - name: Run static analysis
-        run: pio check
+        run: pio check --skip-packages --fail-on-defect medium --fail-on-defect high
+
+  platformio_build:
+    needs: platformio_check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio/platforms
+            ~/.platformio/packages
+          key: platformio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}-build
+          restore-keys: |
+            platformio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}-
+            platformio-${{ runner.os }}-
+      - name: Install PlatformIO
+        run: python -m pip install platformio
+      - name: Build firmware
+        run: pio run
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-s3-firmware
+          path: .pio/build/esp32-s3-devkitc-1/*.bin
+          if-no-files-found: error

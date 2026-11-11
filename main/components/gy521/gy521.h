@@ -19,15 +19,15 @@ namespace robot
 
     struct gy521_data_t
     {
-        float ax;
-        float ay;
-        float az;
-        float gx;
-        float gy;
-        float gz;
-        float yaw;
-        float pitch;
-        float roll;
+        float ax_m;
+        float ay_m;
+        float az_m;
+        float gx_rad;
+        float gy_rad;
+        float gz_rad;
+        float yaw_rad;
+        float pitch_rad;
+        float roll_rad;
     };
 
     class gy521: private Mahony

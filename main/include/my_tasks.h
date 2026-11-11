@@ -25,7 +25,7 @@ namespace robot
         {
             float target_vx_m;
             float target_vy_m;
-            float target_omega_rad;
+            float target_yaw_rad;
             std::mutex target_speed_mutex;
         };
         struct task_handles
@@ -33,7 +33,7 @@ namespace robot
             TaskHandle_t controller_task_handle;
             TaskHandle_t uart_task_handle;
         };
-        struct devices //NOLINT
+        struct devices
         {
             std::array<bdc_motor_pid, 4>& motors;
             std::array<FastAccelStepper*, 2>& steppers;

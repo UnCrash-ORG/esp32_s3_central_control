@@ -20,6 +20,9 @@ namespace robot
     constexpr int UART_TASK_PRIORITY = configMAX_PRIORITIES - 1;
     constexpr int UART_TASK_STACK_DEPTH = 8 * 1024;;
 
+    constexpr int BAT_TASK_PRIORITY = configMAX_PRIORITIES - 2;
+    constexpr int BAT_TASK_STACK_DEPTH = 4 * 1024;;
+
     struct sharing_contents //NOLINT
     {
         struct sharing_variables
@@ -30,11 +33,6 @@ namespace robot
             std::atomic<float> battery_voltage_v;
             std::mutex target_speed_mutex;
         };
-        struct task_handles
-        {
-            TaskHandle_t controller_task_handle;
-            TaskHandle_t uart_task_handle;
-        };
         struct devices
         {
             std::array<bdc_motor_pid, 4>& motors;
@@ -43,7 +41,6 @@ namespace robot
             gy521& imu;
         };
         sharing_variables sharing_variables;
-        task_handles task_handles{};
         devices devices;
     };
     namespace tasks

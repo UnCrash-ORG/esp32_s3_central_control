@@ -5,6 +5,7 @@
 #ifndef ROBOT_PIN_CONFIG_H
 #define ROBOT_PIN_CONFIG_H
 #include "driver/gpio.h"
+#include "esp_adc/adc_oneshot.h"
 
 namespace robot::pins
 {
@@ -55,8 +56,8 @@ namespace robot::pins
     constexpr gpio_num_t SERVO4_PIN = GPIO_NUM_2;
 
     //SYSTEM
-    constexpr gpio_num_t BATTERY_ADC_PIN = GPIO_NUM_6; // BAT_CHK 电池电压采样
-    constexpr gpio_num_t BOOT_KEY_PIN = GPIO_NUM_0; // BOOT 按键
+    constexpr adc_channel_t BAT_CHK_ADC = ADC_CHANNEL_5;
+    constexpr gpio_num_t BOOT_KEY_PIN = GPIO_NUM_0;
 
     // UART
     constexpr gpio_num_t UART0_TXD_PIN = GPIO_NUM_43; // TXD0

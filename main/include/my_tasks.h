@@ -10,6 +10,7 @@
 #include "FastAccelStepper.h"
 #include "freertos/task.h"
 #include "iot_servo.h"
+#include "atomic"
 
 namespace robot
 {
@@ -26,6 +27,7 @@ namespace robot
             float target_vx_m;
             float target_vy_m;
             float target_yaw_rad;
+            std::atomic<float> battery_voltage_v;
             std::mutex target_speed_mutex;
         };
         struct task_handles
@@ -48,6 +50,7 @@ namespace robot
     {
         [[ noreturn ]] void controller_task(void* pvParameter);
         [[ noreturn ]] void uart_task(void* pvParameter);
+        [[ noreturn ]] void battery_voltage_check(void* pvParameters);
     }
 }
 

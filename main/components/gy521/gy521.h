@@ -38,15 +38,12 @@ namespace robot
             gpio_num_t gy521_scl;
             gpio_num_t gy521_sda ;
             bool enable_interrupt = true;
-            float ratio_ax = 1.0;
-            float ratio_ay = 1.0;
-            float ratio_az = 1.0;
-            float ratio_gx = 1.0;
-            float ratio_gy = 1.0;
-            float ratio_gz = 1.0;
+            float rotate_angle = 0;
+            bool reverse_z_axis = false;
         };
         gy521(const gy521_config_t& config);
         gy521_data_t get_data();
+        void cal_gyl_block();
 
     private:
         gy521_config_t config;
@@ -57,6 +54,13 @@ namespace robot
         float correction_gy = 0;
         float correction_gz = 0;
         gy521_data_t buffer{};
+
+        float angle_sin = 2;
+        float angle_cos = 2;
+        inline float sin(float angle);
+        inline float cos(float angle);
+        inline mpu6050_accel_value_t transform(const mpu6050_accel_value_t& value);
+        inline mpu6050_gyro_value_t transform(const mpu6050_gyro_value_t& value);
     };
 } // robot
 

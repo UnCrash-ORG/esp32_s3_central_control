@@ -91,13 +91,9 @@ extern "C" void app_main()
     //Create sub tasks
     TaskHandle_t controller_task_handle = nullptr;
     TaskHandle_t uart_task_handle = nullptr;
+    TaskHandle_t battery_voltage_task_handle = nullptr;
     auto share_contents = sharing_contents{
         .sharing_variables{},
-        .task_handles =
-        {
-            controller_task_handle,
-            uart_task_handle
-        },
         .devices = {
             .motors = bdc_motors,
             .steppers = steppers,
@@ -122,6 +118,15 @@ extern "C" void app_main()
         &share_contents,
         UART_TASK_PRIORITY,
         &uart_task_handle,
+        1
+    );
+    xTaskCreatePinnedToCore(
+        tasks::battery_voltage_check,
+        "BATTask",
+        BAT_TASK_STACK_DEPTH,
+        &share_contents,
+        BAT_TASK_PRIORITY,
+        &battery_voltage_task_handle,
         1
     );
     while (true) vTaskDelay(portMAX_DELAY);

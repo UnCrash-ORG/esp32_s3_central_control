@@ -3,13 +3,15 @@
 //
 
 #include "gy521.h"
+
+#include <cmath>
+
 #include "esp_timer.h"
 #include <driver/gpio.h>
 #include "freertos/FreeRTOS.h"
 
 namespace robot
 {
-
     constexpr float G = 9.80665f;
     constexpr float DEG_TO_RAD = std::numbers::pi_v<float> / 180.0f;
 
@@ -44,19 +46,7 @@ namespace robot
             //Enable data ready interrupt
             i2c_master_transmit(mpu6050_handle.dev_handle, int_en_data, sizeof(int_en_data), 100);
         }
-
-        for (int i = 0; i < CORRECTION_SAMPLES; i++)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-            mpu6050_gyro_value_t gyro_value;
-            ESP_ERROR_CHECK(mpu6050_get_gyro(mpu6050_handle, &gyro_value));
-            correction_gx += gyro_value.gyro_x;
-            correction_gy += gyro_value.gyro_y;
-            correction_gz += gyro_value.gyro_z;
-        }
-        correction_gx /= CORRECTION_SAMPLES;
-        correction_gy /= CORRECTION_SAMPLES;
-        correction_gz /= CORRECTION_SAMPLES;
+        cal_gyl_block();
     }
 
     /**
@@ -74,6 +64,10 @@ namespace robot
             gyro_value.gyro_x -= correction_gx;
             gyro_value.gyro_y -= correction_gy;
             gyro_value.gyro_z -= correction_gz;
+
+            accel_value = transform(accel_value);
+            gyro_value = transform(gyro_value);
+
             const auto duration = static_cast<float>(esp_timer_get_time() - last_seen) / 1e6f;
             updateIMU(
                 gyro_value.gyro_x,
@@ -99,5 +93,62 @@ namespace robot
             return data;
         }
         return buffer;
+    }
+
+    void gy521::cal_gyl_block()
+    {
+        for (int i = 0; i < CORRECTION_SAMPLES; i++)
+        {
+            vTaskDelay(pdMS_TO_TICKS(10));
+            mpu6050_gyro_value_t gyro_value;
+            ESP_ERROR_CHECK(mpu6050_get_gyro(mpu6050_handle, &gyro_value));
+            correction_gx += gyro_value.gyro_x;
+            correction_gy += gyro_value.gyro_y;
+            correction_gz += gyro_value.gyro_z;
+        }
+        correction_gx /= CORRECTION_SAMPLES;
+        correction_gy /= CORRECTION_SAMPLES;
+        correction_gz /= CORRECTION_SAMPLES;
+    }
+
+    float gy521::sin(const float angle)
+    {
+        if (this->angle_sin != 2) return this->angle_sin;
+        angle_sin = std::sin(angle);
+        return angle_sin;
+    }
+
+    float gy521::cos(const float angle)
+    {
+        if (this->angle_cos != 2) return this->angle_cos;
+        angle_cos = std::cos(angle);
+        return angle_cos;
+    }
+
+    mpu6050_accel_value_t gy521::transform(const mpu6050_accel_value_t& value)
+    {
+        const auto ax = value.accel_x * gy521::cos(config.rotate_angle) - value.accel_y * gy521::sin(
+            config.rotate_angle);
+        const auto ay = (value.accel_x * gy521::sin(config.rotate_angle) + value.accel_y *
+            gy521::cos(config.rotate_angle)) * (config.reverse_z_axis ? -1.0f : 1.0f);;
+        const auto az = value.accel_z * (config.reverse_z_axis ? -1.0f : 1.0f);
+        return mpu6050_accel_value_t{
+            .accel_x = ax,
+            .accel_y = ay,
+            .accel_z = az
+        };
+    }
+
+    mpu6050_gyro_value_t gy521::transform(const mpu6050_gyro_value_t& value)
+    {
+        const auto gx = value.gyro_x * gy521::cos(config.rotate_angle) - value.gyro_y * gy521::sin(config.rotate_angle);
+        const auto gy = (value.gyro_x * gy521::sin(config.rotate_angle) + value.gyro_y *
+            gy521::cos(config.rotate_angle)) * (config.reverse_z_axis ? -1.0f : 1.0f);;
+        const auto gz = value.gyro_z * (config.reverse_z_axis ? -1.0f : 1.0f);
+        return mpu6050_gyro_value_t{
+            .gyro_x = gx,
+            .gyro_y = gy,
+            .gyro_z = gz
+        };
     }
 } // robot

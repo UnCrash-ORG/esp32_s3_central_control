@@ -12,9 +12,6 @@
 
 namespace robot
 {
-    constexpr float G = 9.80665f;
-    constexpr float DEG_TO_RAD = std::numbers::pi_v<float> / 180.0f;
-
     gy521::gy521(const gy521_config_t& config) : config(config)
     {
         const i2c_master_bus_config_t i2c_bus_config{
@@ -23,13 +20,16 @@ namespace robot
             .scl_io_num = config.gy521_scl,
             .clk_source = I2C_CLK_SRC_DEFAULT,
             .glitch_ignore_cnt = 7,
-            .intr_priority = -1,
+            .intr_priority = 0,
+            .trans_queue_depth = I2C_TRANS_QUEUE_LENGTH,
             .flags = {
                 .enable_internal_pullup = true,
-            },
+                .allow_pd = false
+            }
         };
         ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &i2c_handle));
         ESP_ERROR_CHECK(mpu6050_create(i2c_handle, MPU6050_DEFAULT_INFO(), &mpu6050_handle));
+        ESP_ERROR_CHECK(mpu6050_config(&mpu6050_handle, MPU6050_DEFAULT_CONFIG()));
 
         //Set DLPF = 42 Hz
         constexpr uint8_t dlpf_data[2] = {0x1A, 0x03};

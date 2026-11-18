@@ -16,6 +16,9 @@ namespace robot
 {
     constexpr int CORRECTION_SAMPLES = 300;
     constexpr int CACHE_LIFETIME_MS = 10;
+    constexpr float G = 9.80665f;
+    constexpr float DEG_TO_RAD = std::numbers::pi_v<float> / 180.0f;
+    constexpr int I2C_TRANS_QUEUE_LENGTH = 512;
 
     struct gy521_data_t
     {

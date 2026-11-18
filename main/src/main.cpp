@@ -66,7 +66,7 @@ extern "C" void app_main()
     std::array<servo_handle_t, 4> servos = {};
     constexpr std::array servo_pins = {pins::SERVO1_PIN, pins::SERVO2_PIN, pins::SERVO3_PIN, pins::SERVO4_PIN};
     constexpr std::array servo_pwm_channels = {LEDC_CHANNEL_0, LEDC_CHANNEL_1, LEDC_CHANNEL_2, LEDC_CHANNEL_3};
-    for (int i = 0; i < sizeof(servo_pins); i++)
+    for (int i = 0; i < servo_pins.size(); i++)
     {
         const servo_config_t servo_cfg = SERVO_CONFIG_DEFAULT(LEDC_LOW_SPEED_MODE, LEDC_TIMER_0, servo_pwm_channels[i],
                                                               servo_pins[i]);
@@ -80,9 +80,9 @@ extern "C" void app_main()
     constexpr std::array step_pins = {pins::STEP1_STEP_PIN, pins::STEP2_STEP_PIN};
     constexpr std::array dir_pins = {pins::STEP1_DIR_PIN, pins::STEP2_DIR_PIN};
     constexpr std::array en_pins = {pins::STEP1_EN_PIN, pins::STEP2_EN_PIN};
-    for (int i = 0; i < sizeof(step_pins); i++)
+    for (int i = 0; i < step_pins.size(); i++)
     {
-        steppers[i] = stepper_engine.stepperConnectToPin(step_pins[i]);
+        steppers[i] = stepper_engine.stepperConnectToPin(step_pins[i], DRIVER_RMT);
         steppers[i]->setDirectionPin(dir_pins[i]);
         steppers[i]->setEnablePin(en_pins[i]);
         steppers[i]->setAutoEnable(true);

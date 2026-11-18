@@ -12,17 +12,17 @@ namespace robot::uart
 {
 
     constexpr uint8_t MAGIC_NUM[2] = {0xAA, 0x55};
-
-    // Frame synchronization magic words
-    constexpr uint8_t FRAME_HEADER_0 = 0xAA;
-    constexpr uint8_t FRAME_HEADER_1 = 0x55;
+    constexpr uint8_t NUM_OF_STEPPER = 2;
+    constexpr uint8_t NUM_OF_SERVOS = 4;
 
     enum class msg_type : uint8_t
     {
         ACQUIRE_IMU = 0,
         ACQUIRE_SET_SPEED = 1,
         ACQUIRE_SET_SERVO = 2,
-        ACQUIRE_SET_STEPPER = 3,
+        ACQUIRE_SET_STEPPER_SPEED = 3,
+        ACQUIRE_SET_STEPPER_MOVE = 4,
+        ACQUIRE_SET_STEPPER_MOVE_TO = 5,
 
         RESPOND_IMU = 255,
         RESPOND_OK = 254
@@ -63,21 +63,30 @@ namespace robot::uart
     // Payload for ACQUIRE_SET_SERVO (20 bytes total: 16B data + 4B CRC32)
     struct alignas(4) payload_acquire_set_servo
     {
-        float servo1_degree; // Target angle for Servo 1
-        float servo2_degree; // Target angle for Servo 2
-        float servo3_degree; // Target angle for Servo 3
-        float servo4_degree; // Target angle for Servo 4
+        float servo_angles[NUM_OF_SERVOS];
         uint32_t crc32; // CRC-32 calculated over header + data
     };
 
-    // Payload for ACQUIRE_SET_STEPPER (12 bytes total: 8B data + 4B CRC32)
-    struct alignas(4) payload_acquire_set_stepper
+    // Payload for ACQUIRE_SET_STEPPER (8 bytes total: 4B data + 4B CRC32)
+    struct alignas(4) payload_acquire_set_stepper_speed
     {
-        uint8_t stepper1_speed; // Steps per second or PWM rate
-        uint8_t stepper2_speed; // Steps per second or PWM rate
-        int16_t stepper1_steps; // Target step displacement
-        int16_t stepper2_steps; // Target step displacement
+        uint8_t steppers_speed[NUM_OF_STEPPER]; // Steps per second
+        uint8_t steppers_acc[NUM_OF_STEPPER]; // Steps per second^2
         uint32_t crc32; // CRC-32 calculated over header + data
+    };
+
+    struct alignas(4) payload_acquire_set_stepper_move
+    {
+        int16_t steppers_move[NUM_OF_STEPPER];
+        uint32_t crc32;
+    };
+
+    struct alignas(4) payload_acquire_set_stepper_move_to
+    {
+        uint16_t select_stepper;
+        uint16_t steppers_move_to[NUM_OF_STEPPER];
+        uint16_t zero;
+        uint32_t crc32;
     };
 
     // Payload for RESPOND_IMU (40 bytes total: 36B data + 4B CRC32)
@@ -103,7 +112,9 @@ namespace robot::uart
         payload_respond_ok respond_ok;
         payload_acquire_set_speed set_speed;
         payload_acquire_set_servo set_servo;
-        payload_acquire_set_stepper set_stepper;
+        payload_acquire_set_stepper_speed set_stepper_speed;
+        payload_acquire_set_stepper_move set_stepper_move;
+        payload_acquire_set_stepper_move_to set_stepper_move_to;
         payload_respond_imu respond_imu;
         uint8_t raw_bytes[40];
     };
@@ -122,7 +133,12 @@ namespace robot::uart
     static_assert(sizeof(payload_respond_ok) == 4, "payload_respond_ok size must be 4 bytes");
     static_assert(sizeof(payload_acquire_set_speed) == 16, "payload_acquire_set_speed size must be 16 bytes");
     static_assert(sizeof(payload_acquire_set_servo) == 20, "payload_acquire_set_servo size must be 20 bytes");
-    static_assert(sizeof(payload_acquire_set_stepper) == 12, "payload_acquire_set_stepper size must be 12 bytes");
+    static_assert(sizeof(payload_acquire_set_stepper_speed) == 8,
+                  "payload_acquire_set_stepper_speed size must be 8 bytes");
+    static_assert(sizeof(payload_acquire_set_stepper_move) == 8,
+                  "payload_acquire_set_stepper_move size must be 8 bytes");
+    static_assert(sizeof(payload_acquire_set_stepper_move_to) == 12,
+                  "payload_acquire_set_stepper_move_to size must be 12 bytes");
     static_assert(sizeof(payload_respond_imu) == 40, "payload_respond_imu size must be 40 bytes");
     static_assert(sizeof(packet) == 44, "packet container size must be 44 bytes");
     static_assert(offsetof(packet, payload) == 4, "payload offset must be 4");

@@ -14,7 +14,7 @@ constexpr TickType_t FREQ_MS = pdMS_TO_TICKS(10);
 
 [[ noreturn ]] void robot::tasks::controller_task(void* pvParameter)
 {
-    TickType_t xLastWakeTime;
+    TickType_t xLastWakeTime = 0;;
 
     espp::Pid::Config yaw_pid_config{};
     ESP_ERROR_CHECK(pid_storage::load(pid_storage::Controller::yaw, yaw_pid_config));

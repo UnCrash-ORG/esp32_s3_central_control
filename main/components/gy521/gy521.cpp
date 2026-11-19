@@ -55,7 +55,7 @@ namespace robot
      */
     gy521_data_t gy521::get_data()
     {
-        if (esp_timer_get_time() - last_seen > CACHE_LIFETIME_MS)
+        if (esp_timer_get_time() - last_seen > CACHE_LIFETIME_MS * 1000)
         {
             mpu6050_accel_value_t accel_value;
             mpu6050_gyro_value_t gyro_value;
@@ -68,6 +68,11 @@ namespace robot
             accel_value = transform(accel_value);
             gyro_value = transform(gyro_value);
 
+            if (unlikely(last_seen == 0))
+            {
+                last_seen = esp_timer_get_time();
+                return gy521_data_t{};
+            }
             const auto duration = static_cast<float>(esp_timer_get_time() - last_seen) / 1e6f;
             updateIMU(
                 gyro_value.gyro_x,

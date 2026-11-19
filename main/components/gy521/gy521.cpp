@@ -55,6 +55,7 @@ namespace robot
      */
     gy521_data_t gy521::get_data()
     {
+        auto lock = std::lock_guard(global_read_lock);
         if (esp_timer_get_time() - last_seen > CACHE_LIFETIME_MS * 1000)
         {
             mpu6050_accel_value_t accel_value;
@@ -102,6 +103,7 @@ namespace robot
 
     void gy521::cal_gyl_block()
     {
+        auto lock = std::lock_guard(global_read_lock);
         for (int i = 0; i < CORRECTION_SAMPLES; i++)
         {
             vTaskDelay(pdMS_TO_TICKS(10));

@@ -57,6 +57,7 @@ namespace robot
         float correction_gy = 0;
         float correction_gz = 0;
         gy521_data_t buffer{};
+        std::mutex global_read_lock;
 
         float angle_sin = 2;
         float angle_cos = 2;

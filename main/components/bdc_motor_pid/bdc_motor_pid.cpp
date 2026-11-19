@@ -100,7 +100,7 @@ void bdc_motor_pid::control_task(const float target_rps, const float pitch_rad)
     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit_handle));
 
     //Calc last rps
-    if (last_seen == 0)
+    if (unlikely(last_seen == 0))
     {
         last_seen = esp_timer_get_time();
         return;
